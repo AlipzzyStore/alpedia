@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ALPEDIA — Maintenance</title><link rel="stylesheet" href="/src/assets/app.css"></head>
+<body>
+<div class="wrap maint-box">
+  <h1 class="g" style="font-size:40px">ALPEDIA</h1>
+  <svg class="icon" style="width:90px;height:90px;margin:20px auto" id="mi"></svg>
+  <h2>Website sedang Maintenance</h2>
+  <p>Kami sedang melakukan perbaikan. Silakan kembali beberapa saat lagi.</p>
+  <button class="btn" onclick="location.href='/src/index.html'">Coba lagi</button>
+</div>
+<script type="module">
+import { ICON_SPRITE } from "/src/assets/icons.js";
+document.body.insertAdjacentHTML("afterbegin", ICON_SPRITE);
+document.getElementById("mi").innerHTML = '<use href="#ic-maint"/>';
+async function check(){
+  try{
+    const r = await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    const d = await r.json();
+    if(!d.maintenance) location.href = '/src/index.html';
+  }catch{}
+}
+setInterval(check, 5000);
+</script>
+</body></html>
