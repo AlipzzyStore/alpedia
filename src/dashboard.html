@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ALPEDIA — Dashboard</title><link rel="stylesheet" href="/src/assets/app.css"></head>
+<body>
+<div id="loader"><div class="spinner"></div><h2 class="g">ALPEDIA</h2></div>
+<div class="topbar" id="topbar"></div>
+<div class="wrap">
+  <h2 class="g">Dashboard</h2>
+  <div class="m" id="profileBox">Memuat...</div>
+  <h3>${""}Aktivitas Terbaru</h3>
+  <div id="activityBox"></div>
+</div>
+<script type="module">
+import { api, requireLogin, renderTopbar, startLoader, startRealtime, icon } from "/src/assets/app.js";
+requireLogin(); renderTopbar(); startRealtime();
+startLoader(load);
+async function load(){
+  try{
+    const d = await api('profil/me');
+    profileBox.innerHTML = `${icon('user','icon-sm')} <b>${d.username}</b><br>${icon('phone','icon-sm')} ${d.phone || '-'}<br>${icon('clock','icon-sm')} Bergabung sejak ${new Date(d.createdAt).toLocaleString('id-ID')}`;
+    activityBox.innerHTML = d.activity.length ? d.activity.map(a=>`<div class="m">${icon('activity','icon-sm')} ${a.a} <small style="opacity:.6">— ${new Date(a.t).toLocaleString('id-ID')}</small></div>`).join('') : '<div class="m">Belum ada aktivitas.</div>';
+  }catch(e){ profileBox.textContent = e.message; }
+}
+</script>
+</body></html>
