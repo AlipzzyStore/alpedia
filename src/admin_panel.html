@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ALPEDIA — Admin Panel</title><link rel="stylesheet" href="/src/assets/app.css"></head>
+<body>
+<div class="topbar"><div class="logo g">ALPEDIA — Admin</div><a class="btn ghost" href="/src/index.html">Keluar Admin</a></div>
+<div class="wrap">
+  <div id="pinGate" class="card auth-card">
+    <svg class="icon" style="width:48px;height:48px"><use href="#ic-shield"/></svg>
+    <h2>Masukkan PIN Admin</h2>
+    <input id="pin" type="password" placeholder="PIN">
+    <button class="btn" id="unlockBtn" style="width:100%">Masuk</button>
+  </div>
+
+  <div id="panel" style="display:none">
+    <div class="row">
+      <button class="btn" id="tabUsers">Users &amp; Online</button>
+      <button class="btn" id="tabChats">Chat Netron AI</button>
+      <button class="btn" id="tabLogs">Log Aktivitas</button>
+      <button class="btn danger" id="maintOn">Maintenance ON</button>
+      <button class="btn ghost" id="maintOff">Maintenance OFF</button>
+    </div>
+    <div class="card auth-card" style="margin:14px 0">
+      <h3>Broadcast ke Semua Pengguna</h3>
+      <input id="bcText" placeholder="Tulis pesan broadcast...">
+      <button class="btn" id="bcSend" style="width:100%">Kirim Broadcast</button>
+    </div>
+    <div id="out"></div>
+  </div>
+</div>
+
+<script type="module">
+import { ICON_SPRITE } from "/src/assets/icons.js";
+document.body.insertAdjacentHTML("afterbegin", ICON_SPRITE);
+
+function AT(){ return sessionStorage.getItem("alpedia_admin_token") || ""; }
+async function adminApi(route, body = {}){
+  const res = await fetch("/api/admin/" + route, { method:"POST", headers:{ "Content-Type":"application/json", Authorization:"Bearer "+AT() }, body: JSON.stringify(body) });
+  const d = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(d.e || "Error");
+  return d;
+}
+
+if (AT()) { pinGate.style.display="none"; panel.style.display="block"; showUsers(); }
+
+unlockBtn.onclick = async ()=>{
+  try{
+    const res = await fetch("/api/admin/login", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pin: pin.value }) });
+    const d = await res.json();
+    if(!res.ok) throw new Error(d.e || "PIN salah");
+    sessionStorage.setItem("alpedia_admin_token", d.t);
+    pinGate.style.display="none"; panel.style.display="block"; showUsers();
+  }catch(e){ alert(e.message); }
+};
+
+tabUsers.onclick = showUsers;
+tabChats.onclick = showChats;
+tabLogs.onclick = showLogs;
+maintOn.onclick = async ()=>{ try{ await adminApi("maintenance-on"); alert("Maintenance diaktifkan"); }catch(e){ alert(e.message); } };
+maintOff.onclick = async ()=>{ try{ await adminApi("maintenance-off"); alert("Maintenance dimatikan"); }catch(e){ alert(e.message); } };
+bcSend.onclick = async ()=>{ try{ await adminApi("broadcast", { text: bcText.value }); alert("Broadcast terkirim"); bcText.value=""; }catch(e){ alert(e.message); } };
+
+async function showUsers(){
+  out.innerHTML = "Memuat...";
+  try{
+    const d = await adminApi("users");
+    out.innerHTML = `<p><svg class="icon icon-sm"><use href="#ic-eye"/></svg> Online sekarang: <b>${d.onlineCount}</b></p>` +
+      d.users.map(u => `<div class="m"><span class="dot ${u.online?'on':''}"></span><b>${u.username}</b> · ${u.phone||'-'} ${u.banned?'<span style="color:#ff6b6b">(DIBANNED)</span>':''}
+        <button class="btn ${u.banned?'ghost':'danger'}" style="padding:6px 10px;margin-left:8px" data-u="${u.username}" data-a="${u.banned?'unban':'ban'}">${u.banned?'Unban':'Ban'}</button></div>`).join('');
+    out.querySelectorAll('button[data-u]').forEach(b=> b.onclick = async ()=>{ try{ await adminApi(b.dataset.a, { username: b.dataset.u }); showUsers(); }catch(e){ alert(e.message); } });
+  }catch(e){ out.textContent = e.message; }
+}
+async function showChats(){
+  out.innerHTML = "Memuat...";
+  try{ const d = await adminApi("chats"); out.innerHTML = d.items.length ? d.items.map(c=>`<div class="m"><b>${c.u}</b>: ${c.q}<br>→ ${c.a}<br><small style="opacity:.6">${new Date(c.t).toLocaleString('id-ID')}</small></div>`).join('') : '<div class="m">Belum ada chat.</div>'; }
+  catch(e){ out.textContent = e.message; }
+}
+async function showLogs(){
+  out.innerHTML = "Memuat...";
+  try{ const d = await adminApi("logs"); out.innerHTML = d.items.map(l=>`<div class="m">${l.u} · ${l.a} · <small style="opacity:.6">${new Date(l.t).toLocaleString('id-ID')}</small></div>`).join(''); }
+  catch(e){ out.textContent = e.message; }
+}
+</script>
+</body></html>
