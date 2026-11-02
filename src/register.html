@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ALPEDIA — Register</title><link rel="stylesheet" href="/src/assets/app.css"></head>
+<body>
+<div id="loader"><div class="spinner"></div><h2 class="g">ALPEDIA</h2></div>
+<div class="topbar" id="topbar"></div>
+<div class="wrap">
+  <div class="card auth-card">
+    <svg class="icon" style="width:48px;height:48px"><use href="#ic-user"/></svg>
+    <h2>Daftar Akun ALPEDIA</h2>
+    <input id="u" placeholder="Username (3-20 huruf/angka)">
+    <input id="ph" placeholder="Nomor HP">
+    <input id="p" type="password" placeholder="Password (min 6 karakter)">
+    <button class="btn" id="go" style="width:100%">Register</button>
+    <div class="row center" style="justify-content:center"><a href="/src/login.html">Sudah punya akun? Login</a></div>
+  </div>
+</div>
+<script type="module">
+import { api, setToken, renderTopbar, startLoader } from "/src/assets/app.js";
+renderTopbar();
+startLoader();
+go.onclick = async ()=>{
+  try{
+    const d = await api('auth/register', { username: u.value, password: p.value, phone: ph.value }, '');
+    setToken(d.token);
+    alert('Akun dibuat. SIMPAN kode recovery ini baik-baik untuk reset password nanti: ' + d.recoveryCode);
+    location.href='/src/index.html';
+  }catch(e){ alert(e.message); }
+};
+</script>
+</body></html>
