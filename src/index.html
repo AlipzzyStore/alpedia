@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ALPEDIA</title><link rel="stylesheet" href="/src/assets/app.css"></head>
+<body>
+<div id="loader"><div class="spinner"></div><h2 class="g">ALPEDIA</h2></div>
+<div class="topbar" id="topbar"></div>
+<div class="wrap">
+  <h1 class="g center" style="font-size:36px">Welcome To AL PEDIA</h1>
+  <div class="grid" id="hub"></div>
+  <div id="view" style="margin-top:30px"></div>
+</div>
+
+<script type="module">
+import { api, requireLogin, renderTopbar, startLoader, startRealtime, icon, getToken } from "/src/assets/app.js";
+renderTopbar();
+startLoader(()=>{ if(!getToken()) location.href = "/src/login.html"; else startRealtime(); });
+
+const FEATURES = [
+  ["ob","bolt","Obfuscator Tools"],
+  ["de","shield","Deobfuscator Tools"],
+  ["dl","download","Downloader Sosmed"],
+  ["hd","hd","HD Video"],
+  ["rb","scissors","Remove BG"],
+  ["ts","search","TikTok Search"],
+  ["sc","shield","Scanning URL"],
+  ["ai","bot","Netron AI"],
+];
+hub.innerHTML = FEATURES.map(([k,i,n]) => `<button class="card" data-k="${k}">${icon(i)}<b>${n}</b></button>`).join('');
+hub.querySelectorAll('button[data-k]').forEach(b => b.onclick = ()=> openTool(b.dataset.k));
+
+function fileToBase64(file){ return new Promise((res,rej)=>{ const r = new FileReader(); r.onload = ()=> res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(file); }); }
+
+function openTool(k){
+  const v = document.getElementById('view');
+  if(k==='ob') v.innerHTML = `
+    <h2 class="g">${icon('bolt')} Obfuscator Tools</h2>
+    <select id="lang"><option value="javascript">JavaScript</option><option value="html">HTML</option><option value="python">Python</option><option value="lua">Lua</option></select>
+    <label class="row"><input type="checkbox" id="protect" style="width:auto"> Aktifkan Protect (khusus JavaScript &amp; Lua)</label>
+    <textarea id="src" placeholder="Tempel kode di sini..."></textarea>
+    <input type="file" id="file">
+    <button class="btn" id="run">Obfuscate</button>
+    <textarea id="out" readonly placeholder="Hasil akan muncul di sini"></textarea>
+    <button class="btn ghost" id="copy">Copy Hasil</button>`;
+  else if(k==='de') v.innerHTML = `
+    <h2 class="g">${icon('shield')} Deobfuscator Tools</h2>
+    <select id="lang"><option value="javascript">JavaScript</option><option value="html">HTML</option><option value="python">Python</option><option value="lua">Lua</option></select>
+    <textarea id="src" placeholder="Tempel kode terobfuskasi..."></textarea>
+    <input type="file" id="file">
+    <button class="btn" id="run">Deobfuscate</button>
+    <textarea id="out" readonly placeholder="Hasil akan muncul di sini"></textarea>
+    <button class="btn ghost" id="copy">Copy Hasil</button>`;
+  else if(k==='dl') v.innerHTML = `
+    <h2 class="g">${icon('download')} Downloader Sosmed</h2>
+    <p style="opacity:.7">Tempel link Instagram, TikTok, atau YouTube — platform dideteksi otomatis.</p>
+    <input id="url" placeholder="https://...">
+    <button class="btn" id="run">Proses</button>
+    <div id="out"></div>`;
+  else if(k==='hd') v.innerHTML = `
+    <h2 class="g">${icon('hd')} HD Video</h2>
+    <p style="opacity:.7">Upload video yang ingin ditingkatkan kualitasnya.</p>
+    <input type="file" id="file" accept="video/*">
+    <button class="btn" id="run">Proses jadi HD</button>
+    <div id="out"></div>`;
+  else if(k==='rb') v.innerHTML = `
+    <h2 class="g">${icon('scissors')} Remove Background</h2>
+    <input type="file" id="file" accept="image/*">
+    <button class="btn" id="run">Hapus Background</button>
+    <div id="out"></div>`;
+  else if(k==='ts') v.innerHTML = `
+    <h2 class="g">${icon('search')} TikTok Search</h2>
+    <input id="q" placeholder="Kata kunci pencarian">
+    <button class="btn" id="run">Cari</button>
+    <div class="grid" id="out"></div>`;
+  else if(k==='sc') v.innerHTML = `
+    <h2 class="g">${icon('shield')} Scanning URL</h2>
+    <input id="url" placeholder="https://...">
+    <button class="btn" id="run">Scan</button>
+    <div id="out"></div>`;
+  else if(k==='ai') v.innerHTML = `
+    <h2 class="g">${icon('bot')} Netron AI</h2>
+    <div id="chatBox" style="max-height:420px;overflow-y:auto"></div>
+    <input id="msg" placeholder="Tulis pesan untuk Netron AI...">
+    <input type="file" id="file" accept="image/*,application/pdf,.txt">
+    <button class="btn" id="run">Kirim</button>`;
+  v.scrollIntoView({behavior:'smooth'});
+  bindTool(k);
+}
+
+let aiHistory = [];
+
+async function bindTool(k){
+  const out = document.getElementById('out');
+  const fileInput = document.getElementById('file');
+  if (fileInput && (k==='ob' || k==='de')) fileInput.onchange = async ()=>{ const f = fileInput.files[0]; if(f) src.value = await f.text(); };
+  if (copy && copy.id==='copy') copy.onclick = ()=>{ navigator.clipboard.writeText(out.value || ''); };
+
+  if (run) run.onclick = async ()=>{
+    run.disabled = true; const original = run.textContent; run.textContent = 'Memproses...';
+    try{
+      if(k==='ob'){ const d = await api('tools/obfuscate', { lang: lang.value, source: src.value, protect: protect.checked }); out.value = d.result; }
+      else if(k==='de'){ const d = await api('tools/deobfuscate', { lang: lang.value, source: src.value }); out.value = d.result; }
+      else if(k==='dl'){
+        out.innerHTML = '...';
+        const d = await api('tools/downloader', { url: url.value });
+        out.innerHTML = `<div class="m"><b>${d.title||''}</b>${d.thumbnail?`<br><img src="${d.thumbnail}" style="max-width:100%;border-radius:12px;margin-top:8px">`:''}</div>
+          <div class="row">${d.items.map(i=>`<a href="${i.url}" target="_blank" rel="noopener"><button class="btn">${icon('download','icon-sm')} ${i.label}</button></a>`).join('')}</div>`;
+      }
+      else if(k==='hd'){
+        const f = fileInput.files[0]; if(!f) throw new Error('Pilih video dulu');
+        out.innerHTML = 'Memproses video, bisa beberapa menit...';
+        const b64 = await fileToBase64(f);
+        const d = await api('tools/hdvideo', { base64: b64, filename: f.name });
+        out.innerHTML = `<div class="m">Selesai! <a href="${d.resultUrl}" target="_blank" rel="noopener"><button class="btn">${icon('download','icon-sm')} Download Hasil</button></a></div>
+          <video src="${d.resultUrl}" controls style="max-width:100%;border-radius:12px;margin-top:10px"></video>`;
+      }
+      else if(k==='rb'){
+        const f = fileInput.files[0]; if(!f) throw new Error('Pilih gambar dulu');
+        out.innerHTML = 'Memproses gambar...';
+        const b64 = await fileToBase64(f);
+        const d = await api('tools/removebg', { base64: b64, filename: f.name });
+        out.innerHTML = `<img src="${d.image}" style="max-width:100%;border-radius:12px"><br><a href="${d.image}" download="removebg.png"><button class="btn" style="margin-top:10px">${icon('download','icon-sm')} Download PNG</button></a>`;
+      }
+      else if(k==='ts'){
+        out.innerHTML = '...';
+        const d = await api('tools/tiktoksearch', { query: q.value });
+        out.innerHTML = d.items.map(i=>`<div class="m"><img src="${i.cover}" style="width:100%;border-radius:10px"><p>${i.title||'(tanpa judul)'}</p><small>${i.author} · ${i.plays} plays</small><br><a href="${i.link}" target="_blank" rel="noopener"><button class="btn" style="margin-top:6px">Buka</button></a></div>`).join('') || 'Tidak ada hasil.';
+      }
+      else if(k==='sc'){
+        out.innerHTML = '...';
+        const d = await api('tools/scanurl', { url: url.value });
+        const y = v => v ? '🚫 Ya' : '✅ Tidak';
+        out.innerHTML = `<div class="m"><b>${d.scanned_url}</b><br>${d.status_description}<br>
+          Phising: ${y(d.is_phishing)}<br>Malware: ${y(d.contains_malware)}<br>Situs berbahaya: ${y(d.sends_to_harmful_sites)}<br>Software jahat: ${y(d.installs_malicious_software)}<br>Unduhan tidak wajar: ${y(d.uncommon_downloads)}</div>`;
+      }
+      else if(k==='ai'){
+        const m = msg.value; if(!m && !(fileInput?.files[0])) return;
+        let file = null;
+        const f = fileInput?.files[0];
+        if (f) { const data = await fileToBase64(f); file = { mime: f.type || 'text/plain', data }; }
+        chatBox.insertAdjacentHTML('beforeend', `<div class="m me">${m||'(file)'}</div>`);
+        msg.value = '';
+        const d = await api('tools/netronai', { message: m, history: aiHistory, file });
+        aiHistory.push({ role:'user', parts:[{text:m}] }, { role:'model', parts:[{text:d.answer}] });
+        chatBox.insertAdjacentHTML('beforeend', `<div class="m">${d.answer}</div>`);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        if(fileInput) fileInput.value = '';
+      }
+    }catch(e){ if(out) out.innerHTML = `<div class="m">⚠ ${e.message}</div>`; else alert(e.message); }
+    finally{ run.disabled = false; run.textContent = original; }
+  };
+}
+</script>
+</body></html>
