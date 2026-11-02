@@ -1,0 +1,24 @@
+{
+  "_comment": "Ini CONTOH SKEMA saja. Di production (Vercel) data sungguhan disimpan di Upstash Redis (lihat README), karena filesystem Vercel read-only/sementara dan tidak aman untuk simpan password. File ini dipakai index.js sebagai referensi struktur & seed PIN admin default.",
+  "settings": {
+    "admin_pin": "1234",
+    "maintenance": false,
+    "broadcast": null
+  },
+  "users": [
+    {
+      "username": "contoh",
+      "password_hash": "(bcrypt hash, bukan plaintext)",
+      "phone": "08xxxxxxxxxx",
+      "banned": false,
+      "recovery_code_hash": "(bcrypt hash)",
+      "created_at": 0
+    }
+  ],
+  "activity_log": [
+    { "username": "contoh", "action": "login", "time": 0 }
+  ],
+  "netron_chat_log": [
+    { "username": "contoh", "question": "halo", "answer": "halo juga", "time": 0 }
+  ]
+}
