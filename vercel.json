@@ -1,0 +1,11 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/index?r=:path*" },
+    { "source": "/", "destination": "/src/index.html" },
+    { "source": "/login", "destination": "/src/login.html" },
+    { "source": "/register", "destination": "/src/register.html" },
+    { "source": "/dashboard", "destination": "/src/dashboard.html" },
+    { "source": "/profil", "destination": "/src/profil.html" },
+    { "source": "/admin", "destination": "/src/admin_panel.html" }
+  ]
+}
