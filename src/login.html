@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ALPEDIA — Login</title><link rel="stylesheet" href="/src/assets/app.css"></head>
+<body>
+<div id="loader"><div class="spinner"></div><h2 class="g">ALPEDIA</h2></div>
+<div class="topbar" id="topbar"></div>
+<div class="wrap">
+  <div class="card auth-card" id="loginCard">
+    <svg class="icon" style="width:48px;height:48px"><use href="#ic-unlock"/></svg>
+    <h2>Masuk ke ALPEDIA</h2>
+    <input id="u" placeholder="Username">
+    <input id="p" type="password" placeholder="Password">
+    <button class="btn" id="go" style="width:100%">Login</button>
+    <div class="row center" style="justify-content:center">
+      <a href="/src/register.html">Belum punya akun? Register</a>
+      <a href="#" id="toForgot">Lupa password?</a>
+    </div>
+  </div>
+
+  <div class="card auth-card" id="forgotCard" style="display:none">
+    <svg class="icon" style="width:48px;height:48px"><use href="#ic-key"/></svg>
+    <h2>Lupa Password</h2>
+    <input id="fu" placeholder="Username">
+    <input id="fc" placeholder="Kode Recovery (diberikan saat register)">
+    <input id="fp" type="password" placeholder="Password baru">
+    <button class="btn" id="fgo" style="width:100%">Reset Password</button>
+    <div class="row center" style="justify-content:center"><a href="#" id="toLogin">Kembali ke Login</a></div>
+  </div>
+</div>
+
+<script type="module">
+import { api, setToken, renderTopbar, startLoader } from "/src/assets/app.js";
+renderTopbar();
+startLoader();
+toForgot.onclick = (e)=>{e.preventDefault();loginCard.style.display='none';forgotCard.style.display='flex'};
+toLogin.onclick = (e)=>{e.preventDefault();forgotCard.style.display='none';loginCard.style.display='flex'};
+go.onclick = async ()=>{
+  try{ const d = await api('auth/login', { username: u.value, password: p.value }, ''); setToken(d.token); location.href='/src/index.html'; }
+  catch(e){ alert(e.message); }
+};
+fgo.onclick = async ()=>{
+  try{ await api('auth/forgot', { username: fu.value, recoveryCode: fc.value, newPassword: fp.value }, ''); alert('Password berhasil direset, silakan login.'); toLogin.click(); }
+  catch(e){ alert(e.message); }
+};
+</script>
+</body></html>
