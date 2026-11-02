@@ -1,1 +1,29 @@
-
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ALPEDIA — Profil</title><link rel="stylesheet" href="/src/assets/app.css"></head>
+<body>
+<div id="loader"><div class="spinner"></div><h2 class="g">ALPEDIA</h2></div>
+<div class="topbar" id="topbar"></div>
+<div class="wrap">
+  <h2 class="g">Pengaturan Akun</h2>
+  <div class="card auth-card" style="margin:0 0 20px">
+    <h3>Profil</h3>
+    <input id="ph" placeholder="Nomor HP">
+    <button class="btn" id="saveProfil" style="width:100%">Simpan Profil</button>
+  </div>
+  <div class="card auth-card">
+    <h3>Ganti Password</h3>
+    <input id="op" type="password" placeholder="Password lama">
+    <input id="np" type="password" placeholder="Password baru (min 6)">
+    <button class="btn" id="savePass" style="width:100%">Ganti Password</button>
+  </div>
+</div>
+<script type="module">
+import { api, requireLogin, renderTopbar, startLoader, startRealtime } from "/src/assets/app.js";
+requireLogin(); renderTopbar(); startRealtime();
+startLoader(load);
+async function load(){ try{ const d = await api('profil/me'); ph.value = d.phone || ''; }catch(e){ alert(e.message); } }
+saveProfil.onclick = async ()=>{ try{ await api('profil/update', { phone: ph.value }); alert('Tersimpan'); }catch(e){ alert(e.message); } };
+savePass.onclick = async ()=>{ try{ await api('profil/password', { oldPassword: op.value, newPassword: np.value }); alert('Password diganti'); op.value=np.value=''; }catch(e){ alert(e.message); } };
+</script>
+</body></html>
